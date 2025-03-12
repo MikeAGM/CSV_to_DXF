@@ -1,11 +1,66 @@
 function generateDXF(points) {
     let dxf = [];
     
-    // Header with required sections
+    // Header with units set to meters
     dxf.push('0\nSECTION');
     dxf.push('2\nHEADER');
     dxf.push('9\n$ACADVER');
     dxf.push('1\nAC1009');
+    dxf.push('9\n$INSUNITS');
+    dxf.push('70\n6');  // 6 = Meters
+    dxf.push('9\n$LUNITS');
+    dxf.push('70\n2');  // 2 = Decimal
+    dxf.push('9\n$MEASUREMENT');
+    dxf.push('70\n1');  // 1 = Metric
+    dxf.push('0\nENDSEC');
+    
+    // Define the block
+    dxf.push('0\nSECTION');
+    dxf.push('2\nBLOCKS');
+    
+    // Point block definition
+    dxf.push('0\nBLOCK');
+    dxf.push('8\n0');
+    dxf.push('2\nPOINT_BLOCK');  // Block name
+    dxf.push('70\n0');
+    dxf.push('10\n0.0');
+    dxf.push('20\n0.0');
+    dxf.push('30\n0.0');
+    
+    // X symbol using lines (replacing circle)
+    // First line of X (bottom-left to top-right)
+    dxf.push('0\nLINE');
+    dxf.push('8\n0');
+    dxf.push('10\n-0.1');
+    dxf.push('20\n-0.1');
+    dxf.push('30\n0.0');
+    dxf.push('11\n0.1');
+    dxf.push('21\n0.1');
+    dxf.push('31\n0.0');
+    
+    // Second line of X (top-left to bottom-right)
+    dxf.push('0\nLINE');
+    dxf.push('8\n0');
+    dxf.push('10\n-0.1');
+    dxf.push('20\n0.1');
+    dxf.push('30\n0.0');
+    dxf.push('11\n0.1');
+    dxf.push('21\n-0.1');
+    dxf.push('31\n0.0');
+    
+    // Attribute definition
+    dxf.push('0\nATTDEF');
+    dxf.push('8\n0');
+    dxf.push('10\n0.0');
+    dxf.push('20\n0.15');  // Adjusted text position
+    dxf.push('30\n0.0');
+    dxf.push('40\n0.1');  // Text height
+    dxf.push('1\nDESCRIPTION');  // Attribute prompt
+    dxf.push('2\nDESC');         // Attribute tag
+    dxf.push('3\n');             // Default value
+    dxf.push('70\n0');           // Attribute flags
+    
+    dxf.push('0\nENDBLK');
     dxf.push('0\nENDSEC');
     
     // Tables section
@@ -29,34 +84,31 @@ function generateDXF(points) {
     dxf.push('2\nENTITIES');
     
     points.forEach(point => {
-        // Point entity
-        dxf.push('0\nPOINT');
-        dxf.push('8\n0');  // Layer
+        // Insert block for each point
+        dxf.push('0\nINSERT');
+        dxf.push('8\n0');
+        dxf.push('2\nPOINT_BLOCK');  // Block name
+        dxf.push('66\n1');           // Attributes follow flag
         dxf.push('10\n' + point.easting);
         dxf.push('20\n' + point.northing);
         dxf.push('30\n' + point.elevation);
+        dxf.push('41\n1.0');  // X scale
+        dxf.push('42\n1.0');  // Y scale
+        dxf.push('43\n1.0');  // Z scale
+        dxf.push('50\n0.0');  // Rotation
         
-        // Description text - reordered group codes
-        if (point.description && point.description.trim()) {
-            dxf.push('0\nTEXT');
-            dxf.push('8\n0');            // Layer
-            dxf.push('39\n0.0');         // Thickness
-            dxf.push('40\n0.25');        // Text height (moved up)
-            dxf.push('10\n' + point.easting);    // First alignment point X
-            dxf.push('20\n' + (point.northing + 0.5));  // First alignment point Y
-            dxf.push('30\n' + point.elevation);  // First alignment point Z
-            dxf.push('1\n' + point.description.trim());  // Text string
-            dxf.push('50\n0.0');         // Text rotation
-            dxf.push('41\n1.0');         // Text width factor
-            dxf.push('51\n0.0');         // Oblique angle
-            dxf.push('7\nSTANDARD');     // Text style
-            dxf.push('71\n0');           // Text generation flags
-            dxf.push('72\n0');           // Horizontal text justification
-            dxf.push('73\n0');           // Vertical text justification
-            dxf.push('11\n' + point.easting);    // Second alignment point X
-            dxf.push('21\n' + (point.northing + 0.5));  // Second alignment point Y
-            dxf.push('31\n' + point.elevation);  // Second alignment point Z
-        }
+        // Add attribute
+        dxf.push('0\nATTRIB');
+        dxf.push('8\n0');
+        dxf.push('10\n' + point.easting);
+        dxf.push('20\n' + (point.northing + 0.2));
+        dxf.push('30\n' + point.elevation);
+        dxf.push('40\n0.1');  // Text height
+        dxf.push('1\n' + (point.description ? point.description.trim() : ''));  // Attribute value
+        dxf.push('2\nDESC');  // Attribute tag
+        dxf.push('70\n0');    // Attribute flags
+        
+        dxf.push('0\nSEQEND');
     });
     
     dxf.push('0\nENDSEC');
